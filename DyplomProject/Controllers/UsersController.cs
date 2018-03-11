@@ -20,20 +20,29 @@ namespace DyplomProject.Controllers
             this.db = db;
         }
 
+        const int UsersCount = 15;
+
         [HttpGet]
         [Route("GetUsers")]
-        public async Task<List<User>> GetUser()
+        public async Task<List<User>> GetUsers(int Page = 0)
         {
             List<User> Users = new List<User>();
 
             await db.Accounts.ForEachAsync(Account => Users.Add(new User(Account)));
 
+            Users = Users
+                .Skip(UsersCount * Page)
+                .Take(UsersCount)
+                .ToList();
+
             return Users;
         }
 
+        const int MessagesCount = 15;
+
         [HttpGet]
         [Route("GetDialog")]
-        public async Task<List<Message>> GetDialog(int id)
+        public async Task<List<Message>> GetDialog(int id, int Page = 0)
         {
             int Id = Convert.ToInt32(Request.Cookies["AccountId"]);
 
@@ -51,6 +60,13 @@ namespace DyplomProject.Controllers
                     Message.ReadTime = DateTime.Now.ToString();
                 }
             });
+
+            Messages.Reverse();
+
+            Messages = Messages
+                .Skip(MessagesCount * Page)
+                .Take(MessagesCount)
+                .ToList();
 
             await db.SaveChangesAsync();
 
