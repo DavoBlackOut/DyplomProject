@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using DyplomProject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,9 +45,22 @@ namespace DyplomProject.Controllers
             if (LoginedAccount != null)
             {
                 Response.Cookies.Append("AccountId", LoginedAccount.AccountId.ToString());
+
+                return Account;
             }
 
             return null;
+        }
+
+        [HttpGet]
+        [Route("GetAccount")]
+        public async Task<Account> GetAccount()
+        {
+            int Id = Int32.Parse(Request.Cookies["AccountId"]);
+
+            Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == Id);
+
+            return Account;
         }
     }
 }

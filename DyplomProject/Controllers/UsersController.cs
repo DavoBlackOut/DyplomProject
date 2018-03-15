@@ -24,11 +24,18 @@ namespace DyplomProject.Controllers
 
         [HttpGet]
         [Route("GetUsers")]
-        public async Task<List<User>> GetUsers(int Page = 0)
+        public async Task<List<User>> GetUsers(string SearchString, int Page = 0)
         {
+            SearchString = SearchString ?? "";
+
             List<User> Users = new List<User>();
 
-            await db.Accounts.ForEachAsync(Account => Users.Add(new User(Account)));
+            await db
+                .Accounts
+                .Where(x =>
+                       x.Name.Contains(SearchString)
+                       || x.Surname.Contains(SearchString))
+                .ForEachAsync(Account => Users.Add(new User(Account)));
 
             Users = Users
                 .Skip(UsersCount * Page)
@@ -48,14 +55,14 @@ namespace DyplomProject.Controllers
 
             List<Message> Messages = await db
                 .Messages
-                .Where(x => (x.GetterId == Id && x.SenderId == Id)
+                .Where(x => (x.GetterId == id && x.SenderId == Id)
                       ||
                        (x.GetterId == Id && x.SenderId == id))
                 .ToListAsync();
 
             Messages.ForEach(Message =>
             {
-                if (string.IsNullOrEmpty(Message.ReadTime))
+                if (string.IsNullOrEmpty(Message.ReadTime) && Message.GetterId == Id)
                 {
                     Message.ReadTime = DateTime.Now.ToString();
                 }
