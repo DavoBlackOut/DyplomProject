@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DyplomProject.Models;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace DyplomProject
 {
@@ -66,6 +68,8 @@ namespace DyplomProject
             };
             app.UseWebSockets(WebSocketOptions);
 
+            List<HttpContext> WebSocketClients = new List<HttpContext>();
+
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path == "/ws")
@@ -74,7 +78,43 @@ namespace DyplomProject
                     {
                         WebSocket WebSocket = await context.WebSockets.AcceptWebSocketAsync();
 
-                        await Echo(context);
+                        if (!WebSocketClients.Contains(context))
+                        {
+                            WebSocketClients.Add(context);
+                        }
+
+                        var buffer = new byte[1024 * 4];
+                        WebSocketReceiveResult result = await WebSocket
+                            .ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                        Dictionary<String, object> JsonMessage = JsonConvert
+                            .DeserializeObject<Dictionary<String, Object>>(Encoding
+                            .UTF8
+                            .GetString(buffer));
+
+                        MessageView Message = new MessageView()
+                        {
+                            Text = JsonMessage["text"].ToString(),
+                            GetterId = Int32.Parse(JsonMessage["getterId"].ToString()),
+                        };
+
+                        while (!result.CloseStatus.HasValue)
+                        {
+                            foreach (HttpContext Client in WebSocketClients)
+                            {
+                                if (Client.Request.Cookies["AccountId"] == Message.GetterId.ToString())
+                                {
+
+                                    await WebSocket
+                                    .SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+
+                                    result = await WebSocket
+                                        .ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                                }
+                            }
+                        }
+                        await WebSocket
+                            .CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
                     }
                     else
                     {
@@ -86,21 +126,6 @@ namespace DyplomProject
                     await next();
                 }
             });
-        }
-
-        private async Task Echo(HttpContext context)
-        {
-            WebSocket WebSocket = await context.WebSockets.AcceptWebSocketAsync();
-
-            var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            while (!result.CloseStatus.HasValue)
-            {
-                await WebSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            }
-            await WebSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
     }
 }
