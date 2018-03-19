@@ -36,6 +36,13 @@ namespace DyplomProject
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=Application.db"));
         }
 
+
+        public class CustomWebSocketClient
+        {
+            public int AccountId;
+            public WebSocket WebSocket;
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -68,7 +75,8 @@ namespace DyplomProject
             };
             app.UseWebSockets(WebSocketOptions);
 
-            List<HttpContext> WebSocketClients = new List<HttpContext>();
+
+            List<CustomWebSocketClient> WebSocketClients = new List<CustomWebSocketClient>();
 
             app.Use(async (context, next) =>
             {
@@ -77,44 +85,22 @@ namespace DyplomProject
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket WebSocket = await context.WebSockets.AcceptWebSocketAsync();
-
-                        if (!WebSocketClients.Contains(context))
-                        {
-                            WebSocketClients.Add(context);
-                        }
+                        WebSocketClients.Add(new CustomWebSocketClient() { WebSocket = WebSocket, AccountId = Int32.Parse(context.Request.Cookies["AccountId"]) });
 
                         var buffer = new byte[1024 * 4];
-                        WebSocketReceiveResult result = await WebSocket
-                            .ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-                        Dictionary<String, object> JsonMessage = JsonConvert
-                            .DeserializeObject<Dictionary<String, Object>>(Encoding
-                            .UTF8
-                            .GetString(buffer));
-
-                        MessageView Message = new MessageView()
-                        {
-                            Text = JsonMessage["text"].ToString(),
-                            GetterId = Int32.Parse(JsonMessage["getterId"].ToString()),
-                        };
-
+                        WebSocketReceiveResult result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         while (!result.CloseStatus.HasValue)
                         {
-                            foreach (HttpContext Client in WebSocketClients)
-                            {
-                                if (Client.Request.Cookies["AccountId"] == Message.GetterId.ToString())
-                                {
+                            Dictionary<String, object> JsonMessage = JsonConvert.DeserializeObject<Dictionary<String, Object>>(Encoding.UTF8.GetString(buffer));
 
-                                    await WebSocket
-                                    .SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+                            WebSocketClients.Where(x => x.AccountId == Int32.Parse(JsonMessage["getterId"].ToString())).ToList().ForEach(x => { x.WebSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None); });
 
-                                    result = await WebSocket
-                                        .ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                                }
-                            }
+                            //await WebSocketClients[JsonMessage["getterId"].ToString()].SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+
+                            result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         }
-                        await WebSocket
-                            .CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                        WebSocketClients.Remove(WebSocketClients.Single(x => x.WebSocket == WebSocket));
+                        await WebSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
                     }
                     else
                     {
