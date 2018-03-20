@@ -61,6 +61,6 @@ namespace DyplomProject.Controllers
             Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == Id);
 
             return Account;
-        }
+        } //
     }
 }
