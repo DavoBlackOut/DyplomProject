@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,6 +63,55 @@ namespace DyplomProject.Controllers
             Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == Id);
 
             return Account;
-        } //
+        }
+
+        [HttpPost]
+        [Route("ChangePhoto")]
+        public async Task<string> ChangePhoto(IFormFile Photo)
+        {
+            Account Account = await db
+                .Accounts
+                .SingleOrDefaultAsync(x => x.AccountId.ToString() == Request.Cookies["AccountId"]);
+
+            if (Account != null)
+            {
+                if (Photo != null)
+                {
+                    var path = Path.Combine(
+                        Directory.GetCurrentDirectory(), "storage",
+                        Account.AccountId.ToString());
+
+                    using (FileStream fs = new FileStream(path, FileMode.Create))
+                    {
+                        await Photo.CopyToAsync(fs);
+
+                        Account.HasPhoto = true;
+
+                        await db.SaveChangesAsync();
+                    }
+
+                    return "Ok";
+                }
+
+                return "Failed: Can't find photo";
+            }
+
+            return "Failed: Can't find account";
+        }
+
+        [Route("GetPhoto")]
+        [HttpGet]
+        public IActionResult GetPhoto(string Id)
+        {
+            if (string.IsNullOrEmpty(Id))
+            {
+                Id = Request.Cookies["AccountId"];
+            }
+
+            var path = Path.Combine(
+                Directory.GetCurrentDirectory(), "storage",
+                        Id);
+            return PhysicalFile(path, "image/png", "photo.png");
+        }
     }
 }

@@ -44,6 +44,12 @@ namespace DyplomProject.Models
             get;
             set;
         }
+
+        public bool HasPhoto
+        {
+            get;
+            set;
+        }
     }
 
     public class User
@@ -78,6 +84,12 @@ namespace DyplomProject.Models
             set;
         }
 
+        public bool HasPhoto
+        {
+            get;
+            set;
+        }
+
         public User(Account Account)
         {
             UserId = Account.AccountId;
@@ -88,6 +100,8 @@ namespace DyplomProject.Models
             Email = Account.Email;
 
             CountryId = Account.CountryId;
+
+            HasPhoto = Account.HasPhoto;
         }
     }
 }
