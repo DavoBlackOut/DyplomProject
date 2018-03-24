@@ -16,5 +16,6 @@ namespace DyplomProject.Models
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Country> Countries { get; set; }
+        public DbSet<Post> Posts { get; set; }
     }
 }

@@ -56,11 +56,14 @@ namespace DyplomProject.Controllers
 
         [HttpGet]
         [Route("GetAccount")]
-        public async Task<Account> GetAccount()
+        public async Task<Account> GetAccount(int? id)
         {
-            int Id = Int32.Parse(Request.Cookies["AccountId"]);
+            if (id == null || id == 0)
+            {
+                id = Int32.Parse(Request.Cookies["AccountId"]);
+            }
 
-            Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == Id);
+            Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == id.Value);
 
             return Account;
         }
