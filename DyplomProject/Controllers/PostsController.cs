@@ -57,5 +57,25 @@ namespace DyplomProject.Controllers
 
             return NewPost;
         }
+
+        [Route("DeletePost")]
+        [HttpDelete]
+        public async Task<string> DeletePost(int Id)
+        {
+            Post Post = await db
+                .Posts
+                .SingleOrDefaultAsync(x => x.PostId == Id);
+
+            if (Post.OwnerId == Int32.Parse(Request.Cookies["AccountId"]))
+            {
+                db.Posts.Remove(Post);
+
+                await db.SaveChangesAsync();
+
+                return "Ok";
+            }
+
+            return "Fail";
+        }
     }
 }
