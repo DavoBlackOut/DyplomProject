@@ -20,4 +20,9 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Condition=" '$(EnableDefaultCompileItems)' == 'true' " Update="Controllers\PostsController.cs">
+      <IncludeInPackage>false</IncludeInPackage>
+    </Compile>
+  </ItemGroup>
 </Project>

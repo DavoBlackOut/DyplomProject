@@ -20,9 +20,11 @@ namespace DyplomProject.Controllers
             this.db = db;
         }
 
+        const int PostsCount = 15;
+
         [Route("GetPosts")]
         [HttpGet]
-        public async Task<List<Post>> GetPosts(int? id)
+        public async Task<List<Post>> GetPosts(int? id, int Page = 0)
         {
             if (id == 0 || id == null)
             {
@@ -35,6 +37,8 @@ namespace DyplomProject.Controllers
                 .ToListAsync();
 
             Posts.Reverse();
+
+            Posts = Posts.Skip(PostsCount * Page).Take(PostsCount).ToList() ;
 
             return Posts;
         }

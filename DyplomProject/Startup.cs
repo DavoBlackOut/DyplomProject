@@ -95,7 +95,7 @@ namespace DyplomProject
 
                     var buffer = new byte[1024 * 4];
                     WebSocketReceiveResult result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    while (!result.CloseStatus.HasValue)
+                    while (WebSocket.State == WebSocketState.Open)
                     {
                         Dictionary<String, object> JsonMessage = JsonConvert.DeserializeObject<Dictionary<String, Object>>(Encoding.UTF8.GetString(buffer));
 
