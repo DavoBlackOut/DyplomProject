@@ -24,7 +24,7 @@ namespace DyplomProject.Controllers
 
         [HttpGet]
         [Route("GetUsers")]
-        public async Task<List<User>> GetUsers(string SearchString, int Page = 0)
+        public async Task<List<User>> GetUsers(string SearchString, int Country = 0, int Page = 0)
         {
             SearchString = SearchString ?? "";
 
@@ -33,8 +33,9 @@ namespace DyplomProject.Controllers
             await db
                 .Accounts
                 .Where(x =>
-                       x.Name.Contains(SearchString)
-                       || x.Surname.Contains(SearchString))
+                       (x.Name.Contains(SearchString)
+                        || x.Surname.Contains(SearchString))
+                       && (x.CountryId == Country || Country == 0))
                 .ForEachAsync(Account => Users.Add(new User(Account)));
 
             Users = Users

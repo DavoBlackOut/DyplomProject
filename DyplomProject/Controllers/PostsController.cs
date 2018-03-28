@@ -14,7 +14,7 @@ namespace DyplomProject.Controllers
     public class PostsController : Controller
     {
         readonly ApplicationDbContext db;
-
+            
         public PostsController(ApplicationDbContext db)
         {
             this.db = db;
