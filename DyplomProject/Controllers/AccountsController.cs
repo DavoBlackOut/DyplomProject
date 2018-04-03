@@ -70,7 +70,7 @@ namespace DyplomProject.Controllers
 
         [HttpPost]
         [Route("ChangePhoto")]
-        public async Task<string> ChangePhoto(IFormFile Photo)
+        public async Task<User> ChangePhoto(IFormFile Photo)
         {
             Account Account = await db
                 .Accounts
@@ -93,13 +93,13 @@ namespace DyplomProject.Controllers
                         await db.SaveChangesAsync();
                     }
 
-                    return "Ok";
+                    return new User(Account);
                 }
 
-                return "Failed: Can't find photo";
+                return null;
             }
 
-            return "Failed: Can't find account";
+            return null;
         }
 
         [Route("GetPhoto")]
