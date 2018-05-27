@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using DyplomProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,7 @@ namespace DyplomProject.Controllers
         [Route("GetDialog")]
         public async Task<List<Message>> GetDialog(int id, int Page = 0)
         {
-            int Id = Convert.ToInt32(Request.Cookies["AccountId"]);
+            int Id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
 
             List<Message> Messages = await db
                 .Messages
@@ -82,24 +83,24 @@ namespace DyplomProject.Controllers
         }
 
         [HttpPost]
-        [Route("SendMessage")]
+        [Route("sendMessage")]
         public async Task<Message> SendMessage([FromBody] MessageView MessageView)
         {
-            int Id = Convert.ToInt32(Request.Cookies["AccountId"]);
+                int Id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
 
-            Message Message = new Message();
+                Message Message = new Message();
 
-            Message.Text = MessageView.Text;
-            Message.SendTime = DateTime.Now.ToString();
+                Message.Text = MessageView.Text;
+                Message.SendTime = DateTime.Now.ToString();
 
-            Message.SenderId = Id;
-            Message.GetterId = MessageView.GetterId;
+                Message.SenderId = Id;
+                Message.GetterId = MessageView.GetterId;
 
-            await db.Messages.AddAsync(Message);
+                await db.Messages.AddAsync(Message);
 
-            await db.SaveChangesAsync();
+                db.SaveChanges();
 
-            return Message;
+                return Message;
         }
     }
 }

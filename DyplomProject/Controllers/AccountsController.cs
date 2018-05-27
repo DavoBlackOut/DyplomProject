@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using DyplomProject.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,7 @@ namespace DyplomProject.Controllers
 
             if (LoginedAccount != null)
             {
-                Response.Cookies.Append("AccountId", LoginedAccount.AccountId.ToString());
+                Response.Cookies.Append("AccountId", CookiesManager.Push(LoginedAccount.AccountId).ToString());
 
                 return Account;
             }
@@ -60,7 +61,7 @@ namespace DyplomProject.Controllers
         {
             if (id == null || id == 0)
             {
-                id = Int32.Parse(Request.Cookies["AccountId"]);
+                id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
             }
 
             Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == id.Value);
@@ -74,7 +75,7 @@ namespace DyplomProject.Controllers
         {
             Account Account = await db
                 .Accounts
-                .SingleOrDefaultAsync(x => x.AccountId.ToString() == Request.Cookies["AccountId"]);
+                .SingleOrDefaultAsync(x => x.AccountId == CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])));
 
             if (Account != null)
             {
@@ -108,7 +109,7 @@ namespace DyplomProject.Controllers
         {
             if (string.IsNullOrEmpty(Id))
             {
-                Id = Request.Cookies["AccountId"];
+                Id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])).ToString();
             }
 
             var path = Path.Combine(

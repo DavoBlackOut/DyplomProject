@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using DyplomProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,7 @@ namespace DyplomProject.Controllers
         {
             if (id == 0 || id == null)
             {
-                id = Int32.Parse(Request.Cookies["AccountId"]);
+                id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
             }
 
             List<Post> Posts = await db
@@ -53,7 +54,7 @@ namespace DyplomProject.Controllers
 
             NewPost.CreatedTime = DateTime.Now.ToString();
 
-            NewPost.OwnerId = Int32.Parse(Request.Cookies["AccountId"]);
+            NewPost.OwnerId = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
 
             await db.Posts.AddAsync(NewPost);
 
@@ -70,7 +71,7 @@ namespace DyplomProject.Controllers
                 .Posts
                 .SingleOrDefaultAsync(x => x.PostId == Id);
 
-            if (Post.OwnerId == Int32.Parse(Request.Cookies["AccountId"]))
+            if (Post.OwnerId == CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])))
             {
                 db.Posts.Remove(Post);
 

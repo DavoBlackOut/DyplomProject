@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using DyplomProject.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -91,7 +92,7 @@ namespace DyplomProject
                 if (context.WebSockets.IsWebSocketRequest)
                 {
                     WebSocket WebSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    WebSocketClients.Add(new CustomWebSocketClient() { WebSocket = WebSocket, AccountId = Int32.Parse(context.Request.Cookies["AccountId"]) });
+                    WebSocketClients.Add(new CustomWebSocketClient() { WebSocket = WebSocket, AccountId = CookiesManager.GetIdByGuid(new Guid(context.Request.Cookies["AccountId"])) });
 
                     var buffer = new byte[1024 * 4];
                     WebSocketReceiveResult result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
@@ -104,7 +105,7 @@ namespace DyplomProject
                             Text = JsonMessage["text"].ToString(),
 
                             SendTime = DateTime.Now.ToString(),
-                            SenderId = Int32.Parse(context.Request.Cookies["AccountId"]),
+                            SenderId = CookiesManager.GetIdByGuid(new Guid(context.Request.Cookies["AccountId"])),
                             GetterId = Int32.Parse(JsonMessage["getterId"].ToString())
                         };
 

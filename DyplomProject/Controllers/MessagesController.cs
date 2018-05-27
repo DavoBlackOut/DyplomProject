@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DyplomProject.Models;
+using DyplomProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +25,7 @@ namespace DyplomProject.Controllers
         [HttpGet]
         public async Task<int> GetUnreadedMessagesCount()
         {
-            int Id = Int32.Parse(Request.Cookies["AccountId"]);
+            int Id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
 
             return await db
                 .Messages
@@ -36,7 +37,7 @@ namespace DyplomProject.Controllers
         [HttpGet]
         public async Task<int> GetUnreadedMessagesCountFromUser(int id)
         {
-            int Id = Int32.Parse(Request.Cookies["AccountId"]);
+            int Id = CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"]));
 
             return await db
                 .Messages
