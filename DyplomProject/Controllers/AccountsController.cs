@@ -25,7 +25,7 @@ namespace DyplomProject.Controllers
         [Route("Register")]
         public async Task<Account> Register([FromBody] Account Account)
         {
-            if (await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == Account.AccountId) == null)
+            if (await db.Accounts.SingleOrDefaultAsync(x => x.Login == Account.Login) == null)
             {
                 await db.Accounts.AddAsync(Account);
 
@@ -47,7 +47,17 @@ namespace DyplomProject.Controllers
 
             if (LoginedAccount != null)
             {
-                Response.Cookies.Append("AccountId", CookiesManager.Push(LoginedAccount.AccountId).ToString());
+                Response
+                    .Cookies
+                    .Append("AccountId",
+                            CookiesManager
+                            .Push(LoginedAccount
+                                  .AccountId)
+                            .ToString(),
+                            new CookieOptions
+                {
+                    Expires = DateTime.Now.AddDays(10)
+                });
 
                 return Account;
             }
