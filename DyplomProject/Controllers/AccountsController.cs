@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using DyplomProject.Models;
 using DyplomProject.Services;
@@ -25,6 +27,8 @@ namespace DyplomProject.Controllers
         [Route("Register")]
         public async Task<Account> Register([FromBody] Account Account)
         {
+            Account.Password = GenerateSHA512String(Account.Password);
+
             if (await db.Accounts.SingleOrDefaultAsync(x => x.Login == Account.Login) == null)
             {
                 await db.Accounts.AddAsync(Account);
@@ -41,6 +45,8 @@ namespace DyplomProject.Controllers
         [Route("Login")]
         public async Task<Account> Login([FromBody] Account Account)
         {
+            Account.Password = GenerateSHA512String(Account.Password);
+
             Account LoginedAccount = await db
                 .Accounts
                 .SingleOrDefaultAsync(x => x.Login == Account.Login && x.Password == Account.Password);
@@ -75,6 +81,7 @@ namespace DyplomProject.Controllers
             }
 
             Account Account = await db.Accounts.SingleOrDefaultAsync(x => x.AccountId == id.Value);
+            Account.Password = string.Empty;
 
             return Account;
         }
@@ -85,7 +92,8 @@ namespace DyplomProject.Controllers
         {
             Account Account = await db
                 .Accounts
-                .SingleOrDefaultAsync(x => x.AccountId == CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])));
+                .SingleOrDefaultAsync(x =>
+                                      x.AccountId == CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])));
 
             if (Account != null)
             {
@@ -126,6 +134,51 @@ namespace DyplomProject.Controllers
                 Directory.GetCurrentDirectory(), "storage",
                         Id);
             return PhysicalFile(path, "image/png", "photo.png");
+        }
+
+        [Route("UpdateAccount")]
+        [HttpPut]
+        public async Task<Account> UpdateAccount([FromBody] Account account)
+        {
+            account.Password = GenerateSHA512String(account.Password);
+
+            Account Account = await db
+                .Accounts
+                .SingleOrDefaultAsync(x =>
+                                      x.AccountId == CookiesManager.GetIdByGuid(new Guid(Request.Cookies["AccountId"])));
+
+            if (Account != null)
+            {
+                Account.Password = account.Password;
+                Account.Name = account.Name;
+                Account.Surname = account.Surname;
+                Account.Email = account.Email;
+                Account.CountryId = account.CountryId;
+
+                await db.SaveChangesAsync();
+
+                return Account;
+            }
+
+            return null;
+        }
+
+        static string GenerateSHA512String(string inputString)
+        {
+            SHA512 sha512 = SHA512.Create();
+            byte[] bytes = Encoding.UTF8.GetBytes(inputString);
+            byte[] hash = sha512.ComputeHash(bytes);
+            return GetStringFromHash(hash);
+        }
+
+        static string GetStringFromHash(byte[] hash)
+        {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                result.Append(hash[i].ToString("X2"));
+            }
+            return result.ToString();
         }
     }
 }
